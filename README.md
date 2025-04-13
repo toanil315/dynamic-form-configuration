@@ -26,3 +26,57 @@ Then call:
 ```ts
 evaluateFieldVisibility(context, fieldConfig);
 ```
+
+Example Result:
+
+```ts
+--- Context: US + BCO ---
+┌─────────┬─────────────────────┬─────────┬────────────────────────────────────────────────┐
+│ (index) │ name                │ visible │ error                                          │
+├─────────┼─────────────────────┼─────────┼────────────────────────────────────────────────┤
+│ 0       │ 'fcm_otd_optional'  │ false   │ null                                           │
+│ 1       │ 'fcm_otd_required'  │ true    │ "This field is required and must include '@'." │
+│ 2       │ 'showForAsiaNonBCO' │ false   │ 'This field is required'                       │
+│ 3       │ 'fallbackField'     │ false   │ null                                           │
+└─────────┴─────────────────────┴─────────┴────────────────────────────────────────────────┘
+
+--- Context: US + Non-BCO ---
+┌─────────┬─────────────────────┬─────────┬────────────────────────────────────────────────┐
+│ (index) │ name                │ visible │ error                                          │
+├─────────┼─────────────────────┼─────────┼────────────────────────────────────────────────┤
+│ 0       │ 'fcm_otd_optional'  │ true    │ null                                           │
+│ 1       │ 'fcm_otd_required'  │ false   │ "This field is required and must include '@'." │
+│ 2       │ 'showForAsiaNonBCO' │ false   │ 'This field is required'                       │
+│ 3       │ 'fallbackField'     │ false   │ null                                           │
+└─────────┴─────────────────────┴─────────┴────────────────────────────────────────────────┘
+
+--- Context: VN + Customer ---
+┌─────────┬─────────────────────┬─────────┬────────────────────────────────────────────────┐
+│ (index) │ name                │ visible │ error                                          │
+├─────────┼─────────────────────┼─────────┼────────────────────────────────────────────────┤
+│ 0       │ 'fcm_otd_optional'  │ false   │ null                                           │
+│ 1       │ 'fcm_otd_required'  │ false   │ "This field is required and must include '@'." │
+│ 2       │ 'showForAsiaNonBCO' │ true    │ 'This field is required'                       │
+│ 3       │ 'fallbackField'     │ false   │ null                                           │
+└─────────┴─────────────────────┴─────────┴────────────────────────────────────────────────┘
+
+--- Context: TH + BCO ---
+┌─────────┬─────────────────────┬─────────┬────────────────────────────────────────────────┐
+│ (index) │ name                │ visible │ error                                          │
+├─────────┼─────────────────────┼─────────┼────────────────────────────────────────────────┤
+│ 0       │ 'fcm_otd_optional'  │ false   │ null                                           │
+│ 1       │ 'fcm_otd_required'  │ false   │ "This field is required and must include '@'." │
+│ 2       │ 'showForAsiaNonBCO' │ false   │ 'This field is required'                       │
+│ 3       │ 'fallbackField'     │ false   │ null                                           │
+└─────────┴─────────────────────┴─────────┴────────────────────────────────────────────────┘
+
+--- Context: AU (fallback) ---
+┌─────────┬─────────────────────┬─────────┬────────────────────────────────────────────────┐
+│ (index) │ name                │ visible │ error                                          │
+├─────────┼─────────────────────┼─────────┼────────────────────────────────────────────────┤
+│ 0       │ 'fcm_otd_optional'  │ false   │ null                                           │
+│ 1       │ 'fcm_otd_required'  │ false   │ "This field is required and must include '@'." │
+│ 2       │ 'showForAsiaNonBCO' │ false   │ 'This field is required'                       │
+│ 3       │ 'fallbackField'     │ true    │ null                                           │
+└─────────┴─────────────────────┴─────────┴────────────────────────────────────────────────┘◊
+```

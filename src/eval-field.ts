@@ -18,13 +18,30 @@ interface Condition {
   value: any;
 }
 
+interface Validation {
+  id: string;
+
+  // 3 fields below can be omitted only in case combine validation.
+  field?: string;
+  operator?: ConditionOperator;
+  value?: any;
+
+  // Error message to show if validation fails
+  message: string;
+
+  // Conditional Statement for combine validation
+  logic?: string[];
+}
+
 export interface FieldConfig {
   name: string;
   label: string;
   type: string;
+
+  // For condition/validation statement structure, I'm using RPN (Reverse Polish Notation).
   conditions: Condition[];
-  // for condition statement structure, I'm using RPN (Reverse Polish Notation).
   visibilityLogic: string[];
+  validations?: Validation[];
 }
 
 function evaluateCondition(
@@ -48,9 +65,20 @@ function evaluateCondition(
     case ConditionOperator.LessOrEqual:
       return actual <= expected;
     case ConditionOperator.Includes:
-      return Array.isArray(actual) && actual.includes(expected);
+      return (
+        (Array.isArray(actual) || typeof actual === "string") &&
+        actual.includes(expected)
+      );
     case ConditionOperator.NotIncludes:
-      return Array.isArray(actual) && !actual.includes(expected);
+      console.log(
+        cond,
+        (Array.isArray(actual) || typeof actual === "string") &&
+          !actual.includes(expected)
+      );
+      return (
+        (Array.isArray(actual) || typeof actual === "string") &&
+        !actual.includes(expected)
+      );
   }
 }
 
@@ -65,9 +93,50 @@ export function evaluateFieldVisibility(
     conditionValuesMap.set(condition.id, evaluateCondition(context, condition));
   }
 
+  return proceedRpnConditionalStatement(conditionValuesMap, visibilityLogic);
+}
+
+export function evaluateFieldValidation(
+  context: Record<string, string | number | unknown[]>,
+  field: FieldConfig
+) {
+  const { validations } = field;
+
+  if (!validations || !validations.length) return null;
+
+  const validationValuesMap = new Map<string, boolean>();
+  for (const validation of validations) {
+    if (validation.logic) continue;
+
+    const validationEval = evaluateCondition(context, validation as Condition);
+    // short circuit evaluation
+    if (!validationEval && validation.message) return validation.message;
+
+    validationValuesMap.set(validation.id, validationEval);
+  }
+
+  for (const validation of validations) {
+    if (!validation.logic) continue;
+
+    const complexValidationEval = proceedRpnConditionalStatement(
+      validationValuesMap,
+      validation.logic
+    );
+
+    // short circuit evaluation
+    if (!complexValidationEval && validation.message) return validation.message;
+  }
+
+  return null;
+}
+
+function proceedRpnConditionalStatement(
+  conditionalValues: Map<string, boolean>,
+  logic: string[]
+) {
   const stack: boolean[] = [];
 
-  for (const token of visibilityLogic) {
+  for (const token of logic) {
     // If token is condition operator, pull 2 item from stack and compute, then push back to stack.
     if (token === "AND" || token === "OR") {
       const firstCondition = stack.pop();
@@ -94,8 +163,8 @@ export function evaluateFieldVisibility(
       stack.push(!firstCondition);
     } else {
       // If token is id of condition, push away to stack
-      if (!conditionValuesMap.has(token)) stack.push(false);
-      stack.push(conditionValuesMap.get(token)!);
+      if (!conditionalValues.has(token)) stack.push(false);
+      stack.push(conditionalValues.get(token)!);
     }
   }
 

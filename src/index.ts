@@ -1,6 +1,7 @@
 import {
   ConditionOperator,
   FieldConfig,
+  evaluateFieldValidation,
   evaluateFieldVisibility,
 } from "./eval-field";
 
@@ -44,6 +45,27 @@ const fieldConfigs: FieldConfig[] = [
       },
     ],
     visibilityLogic: ["isUSCountry", "isBCO", "AND"],
+    validations: [
+      {
+        id: "isRequired",
+        field: "fcm_otd_required",
+        operator: ConditionOperator.NotEquals,
+        value: "", // Not empty
+        message: "", // No direct error, we will group it
+      },
+      {
+        id: "mustIncludeAt",
+        field: "fcm_otd_required",
+        operator: ConditionOperator.Includes,
+        value: "@", // Email-like check
+        message: "", // No direct error
+      },
+      {
+        id: "combinedCheck",
+        logic: ["isRequired", "mustIncludeAt", "AND"],
+        message: "This field is required and must include '@'.",
+      },
+    ],
   },
   {
     name: "showForAsiaNonBCO",
@@ -70,6 +92,16 @@ const fieldConfigs: FieldConfig[] = [
       },
     ],
     visibilityLogic: ["isVN", "isTH", "OR", "isNotBCO", "AND"], // (isVN OR isTH) AND isNotBCO
+
+    validations: [
+      {
+        id: "isRequired",
+        field: "showForAsiaNonBCO",
+        operator: ConditionOperator.NotEquals,
+        value: "",
+        message: "This field is required",
+      },
+    ],
   },
   {
     name: "fallbackField",
@@ -143,6 +175,14 @@ for (const { label, context } of allContexts) {
     fieldConfigs.map((config) => ({
       name: config.name,
       visible: evaluateFieldVisibility(context, config),
+      error: evaluateFieldValidation(
+        {
+          ...context,
+          fcm_otd_required: "",
+          showForAsiaNonBCO: "",
+        },
+        config
+      ),
     }))
   );
 }
